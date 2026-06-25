@@ -1,4 +1,4 @@
-# Render.com blueprint — deploys the app straight from this GitHub repo.
+# Render.com blueprint that deploys the app straight from this GitHub repo.
 # In Render: New + → Blueprint → pick this repo. Render reads this file.
 services:
   - type: web

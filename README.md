@@ -1,4 +1,4 @@
-# ShopSphere — Predictive E-Commerce Platform
+# ShopSphere: Predictive E-Commerce Platform
 
 An Amazon-style online store with a built-in **predictive intelligence layer**.
 Shoppers browse and search a real product catalog and get personalized
@@ -15,16 +15,16 @@ dataset (1M+ transactions, 4,500+ products, 5,800+ customers).
 
 ### 🛍️ Shopper storefront (`/`)
 - Browse 4,500+ products across 10 categories, search, sort, product pages, cart & checkout.
-- **"Because you browsed"** — fresh recommendations built in real time from your
+- **"Because you browsed"**: fresh recommendations built in real time from your
   clicks via an item-similarity map (no retrain needed).
-- **"Recommended for you"** — item-based **collaborative filtering** on your history.
+- **"Recommended for you"**: item-based **collaborative filtering** on your history.
 - Every view / search / add-to-cart / purchase is written to the **ETL
-  clickstream** (`interaction_logs`) — the data that powers the models.
+  clickstream** (`interaction_logs`), the data that powers the models.
 
 ### 📊 Admin console (`/admin`)
 - **ARIMA sales forecasts** (overall + per category) with 95% confidence bands → demand planning.
-- **Inventory reorder** — fast sellers projected to run out, with suggested reorder quantities.
-- **Slow-mover / clearance engine** — stock sitting unsold past its category
+- **Inventory reorder**: fast sellers projected to run out, with suggested reorder quantities.
+- **Slow-mover / clearance engine**: stock sitting unsold past its category
   *shelf life* (perishability) gets a suggested discount to move it.
 - KPIs, revenue-by-category, and a **"Retrain models"** button that reruns the
   pipeline on the latest clickstream so recommendations refresh on demand.
@@ -71,7 +71,7 @@ personalized recommendations.
 ### See the live loop
 1. Sign in, open a few products in one category (e.g. browse *Seasonal*).
 2. The **"Because you browsed"** shelf updates immediately from your clicks.
-3. Open **/admin → Retrain models** — collaborative filtering reruns on your new
+3. Open **/admin → Retrain models**: collaborative filtering reruns on your new
    clickstream and the **"Recommended for you"** shelf refreshes.
 
 ---
@@ -88,7 +88,7 @@ personalized recommendations.
 
 ## Pipeline & orchestration
 
-`python run.py pipeline` runs four stages — each is an importable function the
+`python run.py pipeline` runs four stages, and each is an importable function the
 Airflow DAG calls as a task:
 
 ```
@@ -98,7 +98,7 @@ inventory_engine ────┘
 ```
 
 The DAG ([airflow/dags/etail_pipeline_dag.py](airflow/dags/etail_pipeline_dag.py))
-schedules a daily retrain at 02:00. Airflow isn't required to run the project —
+schedules a daily retrain at 02:00. Airflow isn't required to run the project;
 the same stages run via the CLI and the admin "Retrain" button.
 
 ---
@@ -125,10 +125,10 @@ etail-predictive-intelligence/
 
 ## Notes on the data
 - **Categories** are derived from product descriptions (the sales export has none).
-- **Stock levels & product age** are synthesized deterministically — operational
-  state a pure sales export doesn't contain — so the reorder / perishability
+- **Stock levels & product age** are synthesized deterministically (operational
+  state a pure sales export doesn't contain) so the reorder / perishability
   engine has realistic cases to act on.
-- The 2009–2011 dataset timeline is **shifted forward to "today"** so live clicks,
+- The 2009-2011 dataset timeline is **shifted forward to "today"** so live clicks,
   the forecast horizon and stock-recency math line up with the real calendar.
 
 ## Tech stack

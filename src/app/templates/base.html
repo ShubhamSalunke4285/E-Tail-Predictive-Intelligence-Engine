@@ -133,7 +133,7 @@ async function buyNow(pid){
   const r=await fetch('/buy/'+pid,{method:'POST'});
   const d=await r.json();
   if(d.need_login){location.href='/login';return;}
-  if(d.ok) toast('Purchase logged ✓ — your recommendations will refresh');
+  if(d.ok) toast('Purchase logged ✓, your recommendations will refresh');
 }
 {% block script %}{% endblock %}
 </script>

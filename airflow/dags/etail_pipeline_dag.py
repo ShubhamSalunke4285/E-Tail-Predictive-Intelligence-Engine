@@ -9,7 +9,7 @@ scheduling, retries, backfills and a task-level dependency graph:
         └── forecast_sales ────┴── build_kpis
 
 Deploy by pointing AIRFLOW_HOME's dags_folder at this directory (or copy this
-file into it). Airflow is intentionally NOT a hard dependency of the project —
+file into it). Airflow is intentionally NOT a hard dependency of the project;
 the pipeline runs standalone without it.
 """
 from __future__ import annotations

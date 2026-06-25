@@ -17,17 +17,17 @@
     {% if p.stock_qty > 5 %}
       <div class="stock in">● In stock ({{ p.stock_qty }} available)</div>
     {% elif p.stock_qty > 0 %}
-      <div class="stock low">● Only {{ p.stock_qty }} left — order soon</div>
+      <div class="stock low">● Only {{ p.stock_qty }} left, order soon</div>
     {% else %}
       <div class="stock out">● Out of stock</div>
     {% endif %}
     <p class="desc">Genuine catalog item <b>{{ p.stock_code }}</b>. A customer favourite in
-       {{ p.category }} — frequently bought together with the items below.</p>
+       {{ p.category }}, frequently bought together with the items below.</p>
     <div class="cta">
       <button class="btn" onclick="addCart(event, {{ p.product_id }})">🛒 Add to cart</button>
       <button class="btn amber" onclick="buyNow({{ p.product_id }})">⚡ Buy now</button>
     </div>
-    <div class="loginhint">{% if not user %}<a href="/login">Sign in</a> so this view personalizes your recommendations.{% else %}👁️ This view was logged to your clickstream — recommendations are learning.{% endif %}</div>
+    <div class="loginhint">{% if not user %}<a href="/login">Sign in</a> so this view personalizes your recommendations.{% else %}👁️ This view was logged to your clickstream and recommendations are learning.{% endif %}</div>
   </div>
 </div>
 
