@@ -327,6 +327,15 @@ def api_inventory():
     return jsonify(df.to_dict(orient="records"))
 
 
+@app.route("/api/admin/anomalies")
+def api_anomalies():
+    if not db.table_exists("sales_anomalies"):
+        return jsonify([])
+    df = db.query("SELECT date, revenue, robust_z, anomaly_type "
+                  "FROM sales_anomalies ORDER BY date DESC LIMIT 20")
+    return jsonify(df.to_dict(orient="records"))
+
+
 @app.route("/api/admin/category-revenue")
 def api_category_revenue():
     df = db.query(
@@ -347,6 +356,7 @@ def admin_retrain():
     try:
         pipeline.stage_etl_recommendations()
         pipeline.stage_inventory()
+        pipeline.stage_detect_anomalies()
         pipeline.stage_build_kpis()
     except MemoryError:
         return jsonify({"ok": False, "error": "Not enough memory to retrain on "

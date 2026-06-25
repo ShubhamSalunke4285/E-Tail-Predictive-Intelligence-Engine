@@ -26,6 +26,8 @@ dataset (1M+ transactions, 4,500+ products, 5,800+ customers).
 - **Inventory reorder**: fast sellers projected to run out, with suggested reorder quantities.
 - **Slow-mover / clearance engine**: stock sitting unsold past its category
   *shelf life* (perishability) gets a suggested discount to move it.
+- **Anomaly detection**: flags unusual sales days (promo spikes / outage dips)
+  with a robust MAD z-score, surfaced in an "Unusual sales days" panel.
 - KPIs, revenue-by-category, and a **"Retrain models"** button that reruns the
   pipeline on the latest clickstream so recommendations refresh on demand.
 
@@ -83,6 +85,7 @@ personalized recommendations.
 | **Item-based collaborative filtering** | scikit-learn | user×item matrix → cosine item similarity → per-user top-N + "also bought" |
 | **SARIMA (2,1,1)(1,1,1,7)** | statsmodels | weekly-seasonal daily revenue forecast, overall + per category, 30-day horizon + 95% CI |
 | **Inventory / slow-mover engine** | pandas/numpy | sales velocity vs stock → reorder qty; days-unsold vs category shelf life → clearance discount |
+| **Anomaly detection** | numpy/pandas | robust MAD z-score on daily revenue flags promo spikes and outage dips |
 
 ---
 

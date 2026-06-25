@@ -4,7 +4,8 @@ This is the "retrain" job. It reads the live clickstream (interaction_logs) and
 sales tables from the application DB and refreshes three model outputs:
 
     ETL clickstream ─► collaborative filtering ─► recommendations
-    daily sales      ─► ARIMA (overall + per category) ─► forecasts
+    daily sales      ─► SARIMA (overall + per category) ─► forecasts
+    daily sales      ─► anomaly detection ─► sales_anomalies
     stock + sales    ─► inventory / slow-mover engine  ─► inventory
 
 Run it with `python run.py pipeline`, on a schedule via the Airflow DAG, or
@@ -23,6 +24,7 @@ from src import db
 from src.models import collaborative_filtering as cf
 from src.models import forecasting
 from src.models import inventory
+from src.models import anomaly
 
 
 def _ensure_seeded() -> None:
@@ -86,7 +88,7 @@ def stage_forecast_sales() -> None:
 # Stage 3 - inventory / slow-mover engine
 # ----------------------------------------------------------------------------
 def stage_inventory() -> None:
-    print("[3/4] Inventory & slow-mover engine")
+    print("[3/5] Inventory & slow-mover engine")
     products = db.read_table("products")
     purchases = db.query(
         "SELECT product_id, qty, timestamp FROM interaction_logs "
@@ -100,16 +102,34 @@ def stage_inventory() -> None:
 
 
 # ----------------------------------------------------------------------------
-# Stage 4 - KPI summary
+# Stage 4 - anomaly detection on daily revenue
+# ----------------------------------------------------------------------------
+def stage_detect_anomalies() -> None:
+    print("[4/5] Anomaly detection (robust MAD z-score)")
+    sales = db.read_table("sales_daily")
+    annotated = anomaly.detect_sales_anomalies(sales)
+    flagged = annotated[annotated["is_anomaly"]].copy()
+    flagged["date"] = pd.to_datetime(flagged["date"]).dt.strftime("%Y-%m-%d")
+    db.write_table(flagged[["date", "revenue", "robust_z", "anomaly_type"]],
+                   "sales_anomalies")
+    print(f"  flagged {len(flagged)} unusual days "
+          f"({(annotated['anomaly_type'] == 'spike').sum()} spikes, "
+          f"{(annotated['anomaly_type'] == 'dip').sum()} dips)")
+
+
+# ----------------------------------------------------------------------------
+# Stage 5 - KPI summary
 # ----------------------------------------------------------------------------
 def stage_build_kpis() -> None:
-    print("[4/4] KPI summary")
+    print("[5/5] KPI summary")
     inv = db.read_table("inventory")
     sales = db.read_table("sales_daily")
     n_logs = db.query("SELECT COUNT(*) n FROM interaction_logs")["n"].iloc[0]
     n_users = db.query("SELECT COUNT(*) n FROM customers")["n"].iloc[0]
     fc = db.read_table("forecasts")
     fc_next = fc[(fc["scope"] == "overall") & (fc["kind"] == "forecast")]["value"].sum()
+    n_anom = (db.query("SELECT COUNT(*) n FROM sales_anomalies")["n"].iloc[0]
+              if db.table_exists("sales_anomalies") else 0)
 
     kpis = pd.DataFrame([{
         "total_revenue": round(float(sales["revenue"].sum()), 2),
@@ -119,6 +139,7 @@ def stage_build_kpis() -> None:
         "forecast_revenue_30d": round(float(fc_next), 2),
         "restock_items": int((inv["action"] == "restock").sum()),
         "clearance_items": int((inv["action"] == "clearance").sum()),
+        "anomalies_detected": int(n_anom),
         "inventory_units": int(inv["stock_qty"].sum()),
         "generated_at": pd.Timestamp.utcnow().isoformat(timespec="seconds"),
     }])
@@ -134,6 +155,7 @@ def run_pipeline() -> None:
     stage_etl_recommendations()
     stage_forecast_sales()
     stage_inventory()
+    stage_detect_anomalies()
     stage_build_kpis()
     print("=" * 60)
     print(f" Pipeline complete in {time.time() - t0:.1f}s")

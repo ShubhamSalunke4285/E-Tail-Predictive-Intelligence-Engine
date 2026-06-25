@@ -46,6 +46,12 @@
   <div style="overflow-x:auto"><table id="invTable"></table></div>
 </div>
 
+<div class="card">
+  <h2>⚠️ Unusual sales days</h2>
+  <div class="muted">Anomaly detection on daily revenue (robust MAD z-score &gt; 3). Promo spikes and outage-style dips worth investigating.</div>
+  <div style="overflow-x:auto"><table id="anomTable"></table></div>
+</div>
+
 {% endif %}
 
 <style>
@@ -101,7 +107,7 @@ async function loadKpis(){
     ['Clickstream events',fmtN(k.total_interactions),''],
     ['Reorder now',fmtN(k.restock_items),'amber'],
     ['Clearance items',fmtN(k.clearance_items),'bad'],
-    ['Units in stock',fmtN(k.inventory_units),''],
+    ['Sales anomalies',fmtN(k.anomalies_detected),'amber'],
   ];
   document.getElementById('kpis').innerHTML=cards.map(([l,v,c])=>
     `<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
@@ -174,18 +180,30 @@ async function loadInv(action,btn){
   document.getElementById('invTable').innerHTML=html+'</tbody>';
 }
 
+async function loadAnomalies(){
+  const d=await j('/api/admin/anomalies');
+  let html='<thead><tr><th>Date</th><th>Type</th><th class="num">Revenue</th>'
+    +'<th class="num">Robust z-score</th></tr></thead><tbody>';
+  html+=(d.length? d.map(a=>`<tr><td>${a.date}</td>`
+    +`<td><span class="pill ${a.anomaly_type==='spike'?'clearance':'restock'}">${a.anomaly_type}</span></td>`
+    +`<td class="num">${fmt(a.revenue)}</td>`
+    +`<td class="num">${a.robust_z}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="muted">No anomalies detected.</td></tr>');
+  document.getElementById('anomTable').innerHTML=html+'</tbody>';
+}
+
 async function retrain(){
   const b=document.getElementById('retrainBtn');
   b.disabled=true;b.textContent='⏳ Retraining…';
   try{
     const d=await j('/admin/retrain',{method:'POST'});
     toast(`Models retrained on ${fmtN(d.live_events)} live events ✓`);
-    loadKpis();loadInv('restock',document.querySelector('.tab'));
+    loadKpis();loadInv('restock',document.querySelector('.tab'));loadAnomalies();
   }finally{b.disabled=false;b.textContent='🔄 Retrain models';}
 }
 
 {% if ready %}
-loadKpis();loadScopes();loadCats();loadInv('restock',document.querySelector('.tab'));
+loadKpis();loadScopes();loadCats();loadInv('restock',document.querySelector('.tab'));loadAnomalies();
 {% endif %}
 </script>
 {% endblock %}
