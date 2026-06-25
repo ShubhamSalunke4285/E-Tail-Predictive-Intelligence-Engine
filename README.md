@@ -22,7 +22,7 @@ dataset (1M+ transactions, 4,500+ products, 5,800+ customers).
   clickstream** (`interaction_logs`), the data that powers the models.
 
 ### 📊 Admin console (`/admin`)
-- **ARIMA sales forecasts** (overall + per category) with 95% confidence bands → demand planning.
+- **SARIMA sales forecasts** (weekly-seasonal, overall + per category) with 95% confidence bands → demand planning.
 - **Inventory reorder**: fast sellers projected to run out, with suggested reorder quantities.
 - **Slow-mover / clearance engine**: stock sitting unsold past its category
   *shelf life* (perishability) gets a suggested discount to move it.
@@ -39,7 +39,7 @@ dataset (1M+ transactions, 4,500+ products, 5,800+ customers).
  │ view/search/ │─────▶│ interaction_logs   │──▶│ collaborative      │──▶│ storefront   │
  │ cart/buy     │      │ (clickstream)      │   │  filtering (CF)    │   │ recommends   │
  └──────────────┘      ├────────────────────┤   ├────────────────────┤   ├──────────────┤
-                       │ sales_daily(_cat)  │──▶│ ARIMA forecasting  │──▶│ admin: demand│
+                       │ sales_daily(_cat)  │──▶│ SARIMA forecasting │──▶│ admin: demand│
                        ├────────────────────┤   ├────────────────────┤   │ + reorder    │
                        │ products + stock   │──▶│ inventory / slow-  │──▶│ + clearance  │
                        └────────────────────┘   │  mover engine      │   └──────────────┘
@@ -81,7 +81,7 @@ personalized recommendations.
 | Model | Library | What it does |
 |---|---|---|
 | **Item-based collaborative filtering** | scikit-learn | user×item matrix → cosine item similarity → per-user top-N + "also bought" |
-| **ARIMA(5,1,2)** | statsmodels | daily revenue forecast, overall + per category, 30-day horizon + 95% CI |
+| **SARIMA (2,1,1)(1,1,1,7)** | statsmodels | weekly-seasonal daily revenue forecast, overall + per category, 30-day horizon + 95% CI |
 | **Inventory / slow-mover engine** | pandas/numpy | sales velocity vs stock → reorder qty; days-unsold vs category shelf life → clearance discount |
 
 ---
@@ -117,7 +117,7 @@ etail-predictive-intelligence/
     ├── setup_database.py      # one-time seed of the application DB
     ├── db.py                  # SQLite access layer
     ├── pipeline.py            # ETL + model retrain stages
-    ├── models/                # collaborative filtering · ARIMA · inventory
+    ├── models/                # collaborative filtering · SARIMA · inventory
     └── app/                   # Flask storefront + admin (templates/)
 ```
 

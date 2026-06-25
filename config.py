@@ -32,7 +32,13 @@ RANDOM_SEED = 42
 CF_TOP_N = 10                     # recommendations stored per user
 CF_MIN_INTERACTIONS = 3           # ignore ultra-sparse users when scoring
 FORECAST_HORIZON = 30             # days to forecast forward
-ARIMA_ORDER = (5, 1, 2)           # (p, d, q)
+
+# SARIMA (seasonal ARIMA) — the weekly (7-day) seasonal term lets the forecast
+# keep projecting the weekly sales rhythm instead of flat-lining to the mean.
+SARIMA_ORDER = (2, 1, 1)              # (p, d, q)         non-seasonal part
+SARIMA_SEASONAL_ORDER = (1, 1, 1, 7)  # (P, D, Q, m=7)    weekly seasonality
+# Fallback order for short series that can't support the seasonal fit.
+ARIMA_FALLBACK_ORDER = (1, 1, 1)
 
 # Anomaly detection
 ANOMALY_Z_THRESHOLD = 3.0         # robust z-score cutoff (MAD-based)

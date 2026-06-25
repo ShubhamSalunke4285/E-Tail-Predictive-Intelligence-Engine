@@ -119,7 +119,7 @@ async function loadForecast(){
   const label=document.getElementById('scopeSel').value;
   const d=await j('/api/admin/forecast?label='+encodeURIComponent(label));
   document.getElementById('mape').textContent=
-    d.mape!=null && !isNaN(d.mape) ? `ARIMA(5,1,2) · in-sample MAPE ${d.mape}%` : 'ARIMA forecast';
+    d.mape!=null && !isNaN(d.mape) ? `SARIMA (weekly seasonal) · in-sample MAPE ${d.mape}%` : 'SARIMA (weekly seasonal) forecast';
   if(fcChart)fcChart.destroy();
   fcChart=new Chart(document.getElementById('fcChart'),{
     type:'line',
