@@ -1,0 +1,19 @@
+# Core data engineering
+pandas>=2.0.0
+numpy>=1.24.0
+SQLAlchemy>=2.0.0
+pyarrow>=14.0.0
+
+# Machine learning / forecasting
+scikit-learn>=1.3.0
+statsmodels>=0.14.0
+scipy>=1.10.0
+
+# Web / BI dashboard
+Flask>=3.0.0
+
+# Production WSGI server (used on the host; not needed for local dev)
+gunicorn>=21.0.0
+
+# Orchestration (optional - the pipeline runs without it)
+# apache-airflow>=2.8.0   # heavy on Windows; install in WSL/Docker for the live scheduler

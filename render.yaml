@@ -1,0 +1,12 @@
+# Render.com blueprint — deploys the app straight from this GitHub repo.
+# In Render: New + → Blueprint → pick this repo. Render reads this file.
+services:
+  - type: web
+    name: shopsphere
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.5"

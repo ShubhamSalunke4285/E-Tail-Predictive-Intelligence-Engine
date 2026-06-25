@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Admin · ShopSphere{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<div class="admin-head">
+  <div>
+    <h1>📊 Admin Intelligence</h1>
+    <p class="muted">Sales forecasting · inventory reorder · slow-mover clearance engine</p>
+  </div>
+  <button class="btn" id="retrainBtn" onclick="retrain()">🔄 Retrain models</button>
+</div>
+
+{% if not ready %}
+<div class="empty card">⚙️ Run <code>python run.py pipeline</code> first to populate analytics.</div>
+{% else %}
+
+<section class="kpis" id="kpis"></section>
+
+<div class="row r1">
+  <div class="card">
+    <div class="card-head">
+      <div><h2>Revenue forecast</h2><div class="muted" id="mape"></div></div>
+      <select id="scopeSel" onchange="loadForecast()"></select>
+    </div>
+    <canvas id="fcChart" height="118"></canvas>
+  </div>
+  <div class="card">
+    <h2>Revenue by category</h2>
+    <canvas id="catChart" height="200"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Inventory actions</h2>
+    <div class="tabs">
+      <button class="tab active" data-a="restock" onclick="loadInv('restock',this)">🔼 Reorder</button>
+      <button class="tab" data-a="clearance" onclick="loadInv('clearance',this)">🏷️ Clearance</button>
+      <button class="tab" data-a="overstock" onclick="loadInv('overstock',this)">📦 Overstock</button>
+    </div>
+  </div>
+  <div class="muted" id="invHint"></div>
+  <div style="overflow-x:auto"><table id="invTable"></table></div>
+</div>
+
+{% endif %}
+
+<style>
+  .admin-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .admin-head h1{font-size:26px;font-weight:820}
+  .muted{color:var(--muted);font-size:13px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;
+    box-shadow:var(--shadow);margin-bottom:18px}
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px}
+  .card h2{font-size:16px;font-weight:720}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;margin-bottom:18px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .kpi .v{font-size:25px;font-weight:820;margin-top:6px}
+  .kpi.accent{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;border:0}
+  .kpi.accent .l{color:rgba(255,255,255,.85)}
+  .kpi.amber .v{color:var(--warn)} .kpi.bad .v{color:var(--bad)}
+  .row.r1{display:grid;grid-template-columns:1.7fr 1fr;gap:18px}
+  select{border:1.5px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13.5px;font-weight:600}
+  .tabs{display:flex;gap:6px}
+  .tab{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 13px;
+    font-size:13px;font-weight:650;cursor:pointer;color:var(--muted)}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:12px}
+  th,td{text-align:left;padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+  .pill.restock{background:#dbeafe;color:#1d4ed8}
+  .pill.clearance{background:#fef3c7;color:#b45309}
+  .pill.overstock{background:#e5e7eb;color:#4b5563}
+  .disc{color:var(--bad);font-weight:800}
+  .empty{text-align:center;padding:60px;color:var(--muted)}
+  code{background:var(--bg);padding:3px 8px;border-radius:6px;color:var(--brand)}
+  @media(max-width:820px){.row.r1{grid-template-columns:1fr}}
+</style>
+
+<script>
+const fmt=n=>'£'+Number(n).toLocaleString('en-GB',{maximumFractionDigits:0});
+const fmtN=n=>Number(n).toLocaleString('en-GB');
+const GRID='#eceef5',TXT='#6b7190';
+let fcChart,catChart;
+
+async function j(u,o){const r=await fetch(u,o);return r.json();}
+
+async function loadKpis(){
+  const k=await j('/api/admin/kpis');
+  const cards=[
+    ['Total revenue',fmt(k.total_revenue),'accent'],
+    ['30-day forecast',fmt(k.forecast_revenue_30d),'accent'],
+    ['Products',fmtN(k.total_products),''],
+    ['Customers',fmtN(k.total_customers),''],
+    ['Clickstream events',fmtN(k.total_interactions),''],
+    ['Reorder now',fmtN(k.restock_items),'amber'],
+    ['Clearance items',fmtN(k.clearance_items),'bad'],
+    ['Units in stock',fmtN(k.inventory_units),''],
+  ];
+  document.getElementById('kpis').innerHTML=cards.map(([l,v,c])=>
+    `<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+}
+
+async function loadScopes(){
+  const s=await j('/api/admin/forecast-scopes');
+  s.sort((a,b)=>a.scope==='overall'?-1:1);
+  document.getElementById('scopeSel').innerHTML=
+    s.map(x=>`<option value="${x.label}">${x.label}</option>`).join('');
+  loadForecast();
+}
+
+async function loadForecast(){
+  const label=document.getElementById('scopeSel').value;
+  const d=await j('/api/admin/forecast?label='+encodeURIComponent(label));
+  document.getElementById('mape').textContent=
+    d.mape!=null && !isNaN(d.mape) ? `ARIMA(5,1,2) · in-sample MAPE ${d.mape}%` : 'ARIMA forecast';
+  if(fcChart)fcChart.destroy();
+  fcChart=new Chart(document.getElementById('fcChart'),{
+    type:'line',
+    data:{labels:d.labels,datasets:[
+      {label:'Upper 95%',data:d.upper,borderWidth:0,pointRadius:0,backgroundColor:'rgba(91,61,245,.10)',fill:'+1'},
+      {label:'Lower 95%',data:d.lower,borderWidth:0,pointRadius:0,backgroundColor:'rgba(91,61,245,.10)',fill:false},
+      {label:'Actual',data:d.actual,borderColor:'#5b3df5',borderWidth:2,pointRadius:0,tension:.25},
+      {label:'Forecast',data:d.forecast,borderColor:'#06b6d4',borderWidth:2,borderDash:[6,4],pointRadius:0,tension:.25},
+    ]},
+    options:{responsive:true,interaction:{intersect:false,mode:'index'},
+      plugins:{legend:{labels:{color:TXT,filter:i=>!i.text.includes('95%')}}},
+      scales:{x:{ticks:{color:TXT,maxTicksLimit:8},grid:{color:GRID}},
+        y:{ticks:{color:TXT,callback:v=>fmt(v)},grid:{color:GRID}}}}
+  });
+}
+
+async function loadCats(){
+  const d=await j('/api/admin/category-revenue');
+  if(catChart)catChart.destroy();
+  catChart=new Chart(document.getElementById('catChart'),{
+    type:'doughnut',
+    data:{labels:d.map(x=>x.category),datasets:[{data:d.map(x=>x.revenue),
+      backgroundColor:['#5b3df5','#06b6d4','#10b981','#f59e0b','#ef4444','#7c5cff','#ec4899','#3b82f6','#14b8a6','#a855f7'],borderWidth:0}]},
+    options:{plugins:{legend:{position:'right',labels:{color:TXT,boxWidth:11,font:{size:11}}}},cutout:'60%'}
+  });
+}
+
+const HINTS={
+  restock:'Fast sellers projected to run out within the lead window — reorder the suggested quantity.',
+  clearance:'Aging stock past its category shelf life with no recent sales — promote with the suggested discount.',
+  overstock:'Healthy but slow: very high days-of-cover. Watch before they become clearance.'
+};
+async function loadInv(action,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('invHint').textContent=HINTS[action]||'';
+  const d=await j('/api/admin/inventory?action='+action);
+  const cols=action==='restock'
+    ? ['Product','Category','In stock','Velocity/day','Days left','Reorder qty']
+    : action==='clearance'
+    ? ['Product','Category','In stock','Days unsold','Shelf life','Suggest discount']
+    : ['Product','Category','In stock','Velocity/day','Days of cover','30d demand'];
+  let html='<thead><tr>'+cols.map((c,i)=>`<th class="${i>1?'num':''}">${c}</th>`).join('')+'</tr></thead><tbody>';
+  html+=d.map(r=>{
+    const cells=action==='restock'
+      ? [`${r.emoji} ${r.name}`,r.category,fmtN(r.stock_qty),r.velocity,fmtN(r.days_of_stock),`<b>${fmtN(r.reorder_qty)}</b>`]
+      : action==='clearance'
+      ? [`${r.emoji} ${r.name}`,r.category,fmtN(r.stock_qty),fmtN(r.days_since_sold),r.shelf_life_days+'d',`<span class="disc">-${Math.round(r.suggested_discount*100)}%</span>`]
+      : [`${r.emoji} ${r.name}`,r.category,fmtN(r.stock_qty),r.velocity,fmtN(r.days_of_stock),r.est_demand_30d];
+    return '<tr>'+cells.map((c,i)=>`<td class="${i>1?'num':''}">${c}</td>`).join('')+'</tr>';
+  }).join('');
+  document.getElementById('invTable').innerHTML=html+'</tbody>';
+}
+
+async function retrain(){
+  const b=document.getElementById('retrainBtn');
+  b.disabled=true;b.textContent='⏳ Retraining…';
+  try{
+    const d=await j('/admin/retrain',{method:'POST'});
+    toast(`Models retrained on ${fmtN(d.live_events)} live events ✓`);
+    loadKpis();loadInv('restock',document.querySelector('.tab'));
+  }finally{b.disabled=false;b.textContent='🔄 Retrain models';}
+}
+
+{% if ready %}
+loadKpis();loadScopes();loadCats();loadInv('restock',document.querySelector('.tab'));
+{% endif %}
+</script>
+{% endblock %}

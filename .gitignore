@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Data artifacts
+# (large Kaggle source files are NOT committed; data/app.db IS committed so the
+#  deployed site works without re-running the memory-heavy pipeline on the host)
+data/raw/
+data/warehouse.db
+
+# Airflow
+airflow/logs/
+airflow.db
+airflow.cfg
+webserver_config.py
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

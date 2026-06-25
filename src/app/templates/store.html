@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "macros.html" import product_card, shelf %}
+{% block content %}
+
+<div class="hero">
+  <div class="hero-txt">
+    <h1>Smarter shopping,<br><span>personalized by AI</span></h1>
+    <p>Every click trains your recommendations in real time. Browse 4,500+ products
+       across 10 categories — powered by collaborative filtering.</p>
+    <a class="btn" href="/browse">Start browsing →</a>
+  </div>
+  <div class="hero-art">🛍️✨</div>
+</div>
+
+<div class="catstrip">
+  {% for c in categories %}
+  <a href="/browse?category={{ c.category|urlencode }}">{{ c.emoji }} {{ c.category }}</a>
+  {% endfor %}
+</div>
+
+{% if not user %}
+<div class="signin-note">
+  👋 <a href="/login"><b>Sign in</b></a> to unlock personalized recommendations that learn from your browsing.
+</div>
+{% endif %}
+
+{{ shelf('🔮 Because you browsed', live_recs, 'Live — updates as you click, via item-similarity') }}
+{{ shelf('✨ Recommended for you', for_you, 'Collaborative filtering on your purchase history') }}
+{{ shelf('🔥 Trending now', trending, 'Best sellers across the store') }}
+
+<style>
+  .hero{display:flex;align-items:center;justify-content:space-between;gap:24px;
+    background:linear-gradient(135deg,#5b3df5,#7c5cff 55%,#06b6d4);color:#fff;
+    border-radius:22px;padding:42px 44px;margin-bottom:8px;overflow:hidden}
+  .hero h1{font-size:36px;font-weight:820;line-height:1.12;letter-spacing:-.5px}
+  .hero h1 span{opacity:.92}
+  .hero p{margin:14px 0 22px;max-width:520px;opacity:.94;font-size:15px}
+  .hero .btn{background:#fff;color:var(--brand)}
+  .hero-art{font-size:120px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.25))}
+  .signin-note{background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:14px 18px;margin:18px 0;font-size:14px;box-shadow:var(--shadow)}
+  @media(max-width:720px){.hero-art{display:none}.hero h1{font-size:27px}}
+</style>
+{% endblock %}

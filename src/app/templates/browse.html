@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "macros.html" import product_card %}
+{% block content %}
+
+<div class="catstrip">
+  <a href="/browse" class="{{ 'active' if not category }}">All</a>
+  {% for c in categories %}
+  <a href="/browse?category={{ c.category|urlencode }}"
+     class="{{ 'active' if category == c.category }}">{{ c.emoji }} {{ c.category }}</a>
+  {% endfor %}
+</div>
+
+<div class="browse-head">
+  <div>
+    <h1>{% if q %}Results for “{{ q }}”{% elif category %}{{ category }}{% else %}All products{% endif %}</h1>
+    <span class="muted">{{ count }} product{{ '' if count == 1 else 's' }}</span>
+  </div>
+  <form method="get" class="sortform">
+    <input type="hidden" name="q" value="{{ q }}">
+    <input type="hidden" name="category" value="{{ category }}">
+    <label class="muted">Sort</label>
+    <select name="sort" onchange="this.form.submit()">
+      <option value="popular" {{ 'selected' if sort=='popular' }}>Most popular</option>
+      <option value="price_low" {{ 'selected' if sort=='price_low' }}>Price: low to high</option>
+      <option value="price_high" {{ 'selected' if sort=='price_high' }}>Price: high to low</option>
+    </select>
+  </form>
+</div>
+
+{% if products %}
+<div class="grid">{% for p in products %}{{ product_card(p) }}{% endfor %}</div>
+{% else %}
+<div class="empty">😕 No products found. <a href="/browse">Clear filters</a></div>
+{% endif %}
+
+<style>
+  .browse-head{display:flex;justify-content:space-between;align-items:flex-end;margin:18px 0}
+  .browse-head h1{font-size:24px;font-weight:780}
+  .muted{color:var(--muted);font-size:13px}
+  .sortform{display:flex;align-items:center;gap:8px}
+  .sortform select{border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13.5px}
+  .empty{text-align:center;padding:80px 20px;color:var(--muted);font-size:16px}
+</style>
+{% endblock %}

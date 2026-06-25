@@ -1,0 +1,32 @@
+{% macro product_card(p, show_add=True) %}
+<div class="card prod">
+  <a class="thumb" href="/product/{{ p.product_id }}" style="--h: {{ p.product_id % 360 }}">
+    <span class="emoji">{{ p.emoji }}</span>
+    {% if p.stock_qty is defined and p.stock_qty <= 5 %}<span class="lowstock">Low stock</span>{% endif %}
+  </a>
+  <div class="pbody">
+    <a class="pname" href="/product/{{ p.product_id }}">{{ p.name|truncate(40) }}</a>
+    <div class="pcat">{{ p.emoji }} {{ p.category }}</div>
+    <div class="prow">
+      <span class="price">£{{ '%.2f'|format(p.price) }}</span>
+      {% if show_add %}
+      <button class="add" onclick="addCart(event, {{ p.product_id }})">Add</button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro shelf(title, items, subtitle='') %}
+{% if items %}
+<section class="shelf">
+  <div class="shelf-head">
+    <h2>{{ title }}</h2>
+    {% if subtitle %}<span class="shelf-sub">{{ subtitle }}</span>{% endif %}
+  </div>
+  <div class="grid">
+    {% for p in items %}{{ product_card(p) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endmacro %}

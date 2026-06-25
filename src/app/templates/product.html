@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "macros.html" import product_card, shelf %}
+{% block title %}{{ p.name }} · ShopSphere{% endblock %}
+{% block content %}
+
+<a class="back" href="javascript:history.back()">← Back</a>
+
+<div class="detail">
+  <div class="detail-img" style="--h: {{ p.product_id % 360 }}">
+    <span>{{ p.emoji }}</span>
+  </div>
+  <div class="detail-info">
+    <div class="bc">{{ p.emoji }} {{ p.category }}</div>
+    <h1>{{ p.name }}</h1>
+    <div class="rating">★★★★☆ <span class="muted">({{ (p.product_id % 400) + 12 }} ratings)</span></div>
+    <div class="price">£{{ '%.2f'|format(p.price) }}</div>
+    {% if p.stock_qty > 5 %}
+      <div class="stock in">● In stock ({{ p.stock_qty }} available)</div>
+    {% elif p.stock_qty > 0 %}
+      <div class="stock low">● Only {{ p.stock_qty }} left — order soon</div>
+    {% else %}
+      <div class="stock out">● Out of stock</div>
+    {% endif %}
+    <p class="desc">Genuine catalog item <b>{{ p.stock_code }}</b>. A customer favourite in
+       {{ p.category }} — frequently bought together with the items below.</p>
+    <div class="cta">
+      <button class="btn" onclick="addCart(event, {{ p.product_id }})">🛒 Add to cart</button>
+      <button class="btn amber" onclick="buyNow({{ p.product_id }})">⚡ Buy now</button>
+    </div>
+    <div class="loginhint">{% if not user %}<a href="/login">Sign in</a> so this view personalizes your recommendations.{% else %}👁️ This view was logged to your clickstream — recommendations are learning.{% endif %}</div>
+  </div>
+</div>
+
+{{ shelf('🧩 Customers also bought', similar, 'Item-based collaborative filtering') }}
+{{ shelf('✨ Recommended for you', for_you) }}
+
+<style>
+  .back{display:inline-block;margin-bottom:14px;color:var(--muted);font-weight:600;font-size:14px}
+  .detail{display:grid;grid-template-columns:420px 1fr;gap:32px;background:#fff;border:1px solid var(--line);
+    border-radius:20px;padding:26px;box-shadow:var(--shadow)}
+  .detail-img{height:360px;border-radius:16px;display:grid;place-items:center;
+    background:linear-gradient(135deg,hsl(var(--h) 70% 90%),hsl(calc(var(--h) + 40) 75% 82%))}
+  .detail-img span{font-size:150px;filter:drop-shadow(0 12px 22px rgba(0,0,0,.18))}
+  .bc{color:var(--muted);font-size:13px;font-weight:600}
+  .detail-info h1{font-size:27px;font-weight:780;margin:8px 0;line-height:1.2}
+  .rating{color:#f59e0b;font-size:16px;margin-bottom:14px}
+  .detail-info .price{font-size:32px;font-weight:850;margin:6px 0}
+  .stock{font-weight:700;font-size:14px;margin:6px 0 14px}
+  .stock.in{color:var(--good)} .stock.low{color:var(--warn)} .stock.out{color:var(--bad)}
+  .desc{color:#444;font-size:14.5px;margin-bottom:20px;max-width:560px}
+  .cta{display:flex;gap:12px}
+  .loginhint{margin-top:16px;font-size:13px;color:var(--muted)}
+  .loginhint a{color:var(--brand);font-weight:700}
+  @media(max-width:820px){.detail{grid-template-columns:1fr}.detail-img{height:240px}}
+</style>
+{% endblock %}

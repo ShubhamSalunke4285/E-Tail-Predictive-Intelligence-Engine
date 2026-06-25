@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Cart · ShopSphere{% endblock %}
+{% block content %}
+<h1 class="ph">Your cart</h1>
+{% if items %}
+<div class="cartwrap">
+  <div class="cartitems">
+    {% for p in items %}
+    <div class="cartrow">
+      <div class="ci-thumb" style="--h: {{ p.product_id % 360 }}">{{ p.emoji }}</div>
+      <div class="ci-info">
+        <a href="/product/{{ p.product_id }}" class="ci-name">{{ p.name }}</a>
+        <div class="muted">{{ p.category }} · qty {{ p.qty }}</div>
+      </div>
+      <div class="ci-price">£{{ '%.2f'|format(p.line_total) }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="summary">
+    <h3>Order summary</h3>
+    <div class="srow"><span>Items</span><span>{{ items|sum(attribute='qty') }}</span></div>
+    <div class="srow"><span>Subtotal</span><span>£{{ '%.2f'|format(total) }}</span></div>
+    <div class="srow"><span>Shipping</span><span>Free</span></div>
+    <div class="srow total"><span>Total</span><span>£{{ '%.2f'|format(total) }}</span></div>
+    <form method="post" action="/checkout">
+      <button class="btn" style="width:100%;margin-top:14px">Checkout</button>
+    </form>
+    <p class="muted" style="margin-top:10px;font-size:12px">Checkout logs purchases to the clickstream — your recommendations will refresh on the next model run.</p>
+  </div>
+</div>
+{% else %}
+<div class="empty">🛒 Your cart is empty. <a href="/browse">Start shopping</a></div>
+{% endif %}
+<style>
+  .ph{font-size:26px;font-weight:780;margin-bottom:18px}
+  .cartwrap{display:grid;grid-template-columns:1fr 320px;gap:22px}
+  .cartrow{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .ci-thumb{width:60px;height:60px;border-radius:11px;display:grid;place-items:center;font-size:30px;
+    background:linear-gradient(135deg,hsl(var(--h) 70% 90%),hsl(calc(var(--h) + 40) 75% 82%))}
+  .ci-info{flex:1}.ci-name{font-weight:650;font-size:15px}.ci-name:hover{color:var(--brand)}
+  .ci-price{font-weight:800;font-size:17px}
+  .summary{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;height:fit-content;box-shadow:var(--shadow)}
+  .summary h3{font-size:16px;margin-bottom:14px}
+  .srow{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;color:#444}
+  .srow.total{border-top:1px solid var(--line);margin-top:6px;padding-top:12px;font-weight:850;font-size:18px;color:var(--ink)}
+  .muted{color:var(--muted)} .empty{text-align:center;padding:80px;color:var(--muted)}
+  @media(max-width:820px){.cartwrap{grid-template-columns:1fr}}
+</style>
+{% endblock %}
